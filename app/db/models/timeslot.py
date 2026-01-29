@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.models.enums import TimeSlotStatus
+from app.db.models.enums import TimeSlotStatus
 
 class TimeSlot(Base):
     __tablename__ = "time_slots"

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 
 from app.db.base import Base
-from app.models.enums import UserRole
+from app.db.models.enums import UserRole
 
 class User(Base):
     __tablename__ = "users"

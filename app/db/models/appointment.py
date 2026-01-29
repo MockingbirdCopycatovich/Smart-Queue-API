@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.models.enums import AppointmentStatus, AppointmentPriority
+from app.db.models.enums import AppointmentStatus, AppointmentPriority
 
 class Appointment(Base):
     __tablename__ = "appointments"
