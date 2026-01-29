@@ -7,6 +7,7 @@ from app.services.booking_service import (
     create_specialist,
     create_time_slot,
     book_time_slot,
+    confirm_appointment
 )
 
 if __name__ == "__main__":
@@ -14,7 +15,7 @@ if __name__ == "__main__":
 
     session = SessionLocal()
 
-    user = create_user(session, "demo2@example.com")
+    user = create_user(session, "demo6@example.com")
     specialist = create_specialist(session, "Dr. House", "Therapist")
 
     slot = create_time_slot(
@@ -27,3 +28,7 @@ if __name__ == "__main__":
     appointment = book_time_slot(session, user.id, slot.id)
 
     print("Appointment ID:", appointment.id)
+    
+    with SessionLocal() as confirm_session:
+        confirmed = confirm_appointment(confirm_session, appointment.id)
+        print("CONFIRMED:", confirmed.id)

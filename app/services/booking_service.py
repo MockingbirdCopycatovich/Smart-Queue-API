@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.db.models import (
@@ -16,6 +17,8 @@ from app.db.models import (
     AppointmentStatus,
     AppointmentPriority,
 )
+from uuid import uuid4
+
 
 def create_user(session: Session, email: str) -> User:
     user = User(
@@ -96,3 +99,41 @@ def book_time_slot(session: Session, user_id: str, slot_id: str) -> Appointment:
         session.rollback()
         raise
 
+def confirm_appointment(session: Session, appointment_id):
+    with session.begin():
+
+        appointment = session.execute(
+            select(Appointment)
+            .where(Appointment.id == appointment_id)
+            .with_for_update()
+        ).scalar_one_or_none()
+
+        if not appointment:
+            raise ValueError("Appointment not found")
+
+        if appointment.status != AppointmentStatus.HOLD:
+            raise ValueError("Appointment is not in HOLD state")
+
+        if appointment.expires_at and appointment.expires_at < datetime.utcnow():
+            raise ValueError("Appointment HOLD expired")
+
+        slot = session.execute(
+            select(TimeSlot)
+            .where(TimeSlot.id == appointment.time_slot_id)
+            .with_for_update()
+        ).scalar_one()
+
+        if slot.status != TimeSlotStatus.HOLD:
+            raise ValueError("Time slot is not in HOLD state")
+
+        appointment.status = AppointmentStatus.CONFIRMED
+        slot.status = TimeSlotStatus.BOOKED
+
+        event = AppointmentEvent(
+            id=uuid4(),
+            appointment_id=appointment.id,
+            event_type="CONFIRMED",
+        )
+        session.add(event)
+
+    return appointment
