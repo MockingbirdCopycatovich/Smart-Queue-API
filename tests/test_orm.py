@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.base import Base
 
-from app.models import (
+from app.db.models import (
     user,
     specialist,
     timeslot,
