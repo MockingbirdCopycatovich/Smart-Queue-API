@@ -15,6 +15,7 @@ class AppointmentStatus(str, enum.Enum):
     CONFIRMED = "CONFIRMED"
     CANCELLED = "CANCELLED"
     NO_SHOW = "NO_SHOW"
+    EXPIRED = "EXPIRED"
 
 class AppointmentPriority(str, enum.Enum):
     NORMAL = "NORMAL"

@@ -150,14 +150,11 @@ def cancel_appointment(session: Session, appointment_id):
         if not appointment:
             raise ValueError("Appointment not found")
 
-        if appointment.status == AppointmentStatus.CANCELED:
-            raise ValueError("Appointment already canceled")
-
-        if appointment.status not in (
-            AppointmentStatus.HOLD,
-            AppointmentStatus.CONFIRMED,
+        if appointment.status in (
+            AppointmentStatus.CANCELLED,
+            AppointmentStatus.EXPIRED
         ):
-            raise ValueError("Appointment cannot be canceled")
+            return appointment
 
         slot = session.execute(
             select(TimeSlot)
@@ -165,14 +162,53 @@ def cancel_appointment(session: Session, appointment_id):
             .with_for_update()
         ).scalar_one()
 
-        appointment.status = AppointmentStatus.CANCELED
+        appointment.status = AppointmentStatus.CANCELLED
         slot.status = TimeSlotStatus.AVAILABLE
 
         event = AppointmentEvent(
             id=uuid4(),
             appointment_id=appointment.id,
-            event_type="CANCELED",
+            event_type="CANCELLED",
         )
         session.add(event)
 
     return appointment
+
+
+
+def expire_holds(session: Session) -> int:
+
+    now = datetime.utcnow()
+
+    appointments = session.execute(
+        select(Appointment)
+        .where(
+            Appointment.status == AppointmentStatus.HOLD,
+            Appointment.expires_at < now,
+        )
+        .with_for_update()
+    ).scalars().all()
+
+    count = 0
+
+    for appointment in appointments:
+        slot = session.execute(
+            select(TimeSlot)
+            .where(TimeSlot.id == appointment.time_slot_id)
+            .with_for_update()
+        ).scalar_one()
+
+        appointment.status = AppointmentStatus.EXPIRED
+        slot.status = TimeSlotStatus.AVAILABLE
+
+        event = AppointmentEvent(
+            id=uuid4(),
+            appointment_id=appointment.id,
+            event_type="EXPIRED",
+        )
+        session.add(event)
+
+        count += 1
+
+    session.commit()
+    return count
