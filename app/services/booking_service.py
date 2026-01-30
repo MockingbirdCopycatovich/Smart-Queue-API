@@ -137,3 +137,42 @@ def confirm_appointment(session: Session, appointment_id):
         session.add(event)
 
     return appointment
+
+def cancel_appointment(session: Session, appointment_id):
+    with session.begin():
+
+        appointment = session.execute(
+            select(Appointment)
+            .where(Appointment.id == appointment_id)
+            .with_for_update()
+        ).scalar_one_or_none()
+
+        if not appointment:
+            raise ValueError("Appointment not found")
+
+        if appointment.status == AppointmentStatus.CANCELED:
+            raise ValueError("Appointment already canceled")
+
+        if appointment.status not in (
+            AppointmentStatus.HOLD,
+            AppointmentStatus.CONFIRMED,
+        ):
+            raise ValueError("Appointment cannot be canceled")
+
+        slot = session.execute(
+            select(TimeSlot)
+            .where(TimeSlot.id == appointment.time_slot_id)
+            .with_for_update()
+        ).scalar_one()
+
+        appointment.status = AppointmentStatus.CANCELED
+        slot.status = TimeSlotStatus.AVAILABLE
+
+        event = AppointmentEvent(
+            id=uuid4(),
+            appointment_id=appointment.id,
+            event_type="CANCELED",
+        )
+        session.add(event)
+
+    return appointment
