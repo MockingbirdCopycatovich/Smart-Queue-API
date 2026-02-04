@@ -4,9 +4,11 @@ async function loadSpecialists() {
 
     const list = document.getElementById("specialists-list");
     list.innerHTML = "";
+
     specialists.forEach(s => {
         const li = document.createElement("li");
-        li.textContent = `${s.full_name} - ${s.service_type}`;
+        li.textContent = `${s.full_name} (${s.service_type})`;
+        li.style.cursor = "pointer";
         li.onclick = () => loadSlots(s.id);
         list.appendChild(li);
     });
@@ -18,9 +20,11 @@ async function loadSlots(specialistId) {
 
     const list = document.getElementById("slots-list");
     list.innerHTML = "";
+
     slots.forEach(slot => {
         const li = document.createElement("li");
-        li.textContent = `${slot.start_time} - ${slot.end_time} | ${slot.status}`;
+        li.textContent =
+            `${slot.start_time} – ${slot.end_time} | ${slot.status}`;
         list.appendChild(li);
     });
 }

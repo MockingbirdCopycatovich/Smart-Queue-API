@@ -212,3 +212,14 @@ def expire_holds(session: Session) -> int:
 
     session.commit()
     return count
+
+from app.db.models import TimeSlot, TimeSlotStatus
+
+
+def get_slots_by_specialist(db, specialist_id: str):
+    return (
+        db.query(TimeSlot)
+        .filter(TimeSlot.specialist_id == specialist_id)
+        .order_by(TimeSlot.start_time)
+        .all()
+    )
